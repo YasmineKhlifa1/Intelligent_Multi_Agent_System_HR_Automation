@@ -13,13 +13,25 @@ load_dotenv()
 # ✅ Set Gemini API key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+from crewai import LLM
+import json
 
-llm= ChatGoogleGenerativeAI(
-    model="gemini-pro",
-    verbose =True , 
-    temperature = 0.5 , 
-    google_api_key =GEMINI_API_KEY
+file_path = 'credentialsG.json'
+
+# Load the JSON file
+with open(file_path, 'r') as file:
+    vertex_credentials = json.load(file)
+
+# Convert the credentials to a JSON string
+vertex_credentials_json = json.dumps(vertex_credentials)
+
+llm = LLM(
+    model="gemini/gemini-1.5-pro-latest",
+    temperature=0.7,
+    vertex_credentials=vertex_credentials_json
 )
+
+
 # ✅ Create instances of tools
 fetch_emails_tool = FetchRecentEmailsTool()
 fetch_events_tool = FetchEventsForDateTool()
@@ -37,19 +49,43 @@ HR_agent = Agent(
 )
 
 
-# ✅ Define Tasks (Ensure tools are passed correctly)
 summarize_emails_task = Task(
     description="Fetch and summarize high-urgency emails.",
-    expected_output="A list of urgent emails with short summaries.",
+    expected_output="""
+    A JSON response containing a list of urgent emails with sender name, subject, summary, and received time.
+    Example:
+    {
+      "urgent_emails": [
+        {
+          
+          "subject": "Project Deadline Extension",
+          "summary": "The deadline for the XYZ project has been extended to next Friday.",
+          
+        }
+      ]
+    }
+    """,
     agent=HR_agent
-    
 )
 
 display_events_task = Task(
     description="Retrieve scheduled events for a given date.",
-    expected_output="A structured list of events for the requested date.",
+    expected_output="""
+    Provide the response in JSON format:
+    {
+      "events": [
+        {
+          "title": "Meeting with Team",
+          "start_time": "YYYY-MM-DD HH:MM",
+          "end_time": "YYYY-MM-DD HH:MM",
+          "location": "Online/Office"
+        }
+      ]
+    }
+    """,
     agent=HR_agent
 )
+
 
 # ✅ Create Crew 
 crew = Crew(
@@ -59,10 +95,10 @@ crew = Crew(
     memory=True
 )
 
-# ✅ Start execution with proper exception handling
+
+# ✅ Execute Crew with User Input
 try:
-    result = crew.kickoff()
+    result = crew.kickoff(inputs={ "max_results" : 3 ,"date_str": '2025-02-24'})
     print("✅ Execution Result:\n", result)
 except Exception as e:
     print(f"❌ ERROR during Crew Execution: {e}")
-
