@@ -1,61 +1,57 @@
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
-from crewai import Agent, Task, Crew
-import litellm
+from crewai import Agent, Task, Crew, Process
+from langchain_google_genai import ChatGoogleGenerativeAI
 from Agent_Tools import FetchEventsForDateTool, FetchRecentEmailsTool
+from google.oauth2 import service_account
 
 
+provider = "gemini"
 # ✅ Load environment variables
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("Google API Key is missing!")
 
-# Configuration de LiteLLM pour utiliser Gemini
-gemini_model = "gemini-1.5-pro"
-
-# Fonction pour appeler Gemini via LiteLLM
-def call_gemini(prompt):
-    response = litellm.completion(
-        model=gemini_model,
-        api_key=GOOGLE_API_KEY,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response["choices"][0]["message"]["content"]
+# ✅ Set Gemini API key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
-# ✅ AI Agent definition
+llm= ChatGoogleGenerativeAI(
+    model="gemini-pro",
+    verbose =True , 
+    temperature = 0.5 , 
+    google_api_key =GEMINI_API_KEY
+)
+# ✅ Create instances of tools
+fetch_emails_tool = FetchRecentEmailsTool()
+fetch_events_tool = FetchEventsForDateTool()
+
+# ✅ AI Agent Definition
 HR_agent = Agent(
     name="HR Agent",
     role="Email & Calendar Assistant",
     backstory="An AI that extracts and summarizes urgent emails while displaying scheduled events.",
     goal="Provide summaries of urgent emails and show scheduled events for a given date.",
-    llm=call_gemini,
-    verbose=True
+    verbose=True,
+    memory=True, 
+    llm =llm, 
+    tools=[fetch_emails_tool, fetch_events_tool]
 )
 
 
-# ✅ Create instances of tools
-fetch_emails_tool = FetchRecentEmailsTool()
-fetch_events_tool = FetchEventsForDateTool()
-
-# ✅ Define Tasks
+# ✅ Define Tasks (Ensure tools are passed correctly)
 summarize_emails_task = Task(
     description="Fetch and summarize high-urgency emails.",
     expected_output="A list of urgent emails with short summaries.",
-    agent=HR_agent,
-    tools=[fetch_emails_tool]  
+    agent=HR_agent
+    
 )
 
 display_events_task = Task(
     description="Retrieve scheduled events for a given date.",
     expected_output="A structured list of events for the requested date.",
-    agent=HR_agent,
-    tools=[fetch_events_tool]  
+    agent=HR_agent
 )
 
-# ✅ Create Crew
+# ✅ Create Crew 
 crew = Crew(
     agents=[HR_agent],
     tasks=[summarize_emails_task, display_events_task],
@@ -63,6 +59,10 @@ crew = Crew(
     memory=True
 )
 
-# ✅ Start execution
-result = crew.kickoff()
-print("✅ Execution Result:\n", result)
+# ✅ Start execution with proper exception handling
+try:
+    result = crew.kickoff()
+    print("✅ Execution Result:\n", result)
+except Exception as e:
+    print(f"❌ ERROR during Crew Execution: {e}")
+
