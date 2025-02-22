@@ -44,30 +44,44 @@ HR_agent = Agent(
     goal="Provide summaries of urgent emails and show scheduled events for a given date.",
     verbose=True,
     memory=True, 
-    llm =llm, 
-    tools=[fetch_emails_tool, fetch_events_tool]
+    llm =llm
 )
 
 
 summarize_emails_task = Task(
-    description="Fetch and summarize emails.",
-    expected_output="""
+    description=""" 
+    Fetch and summarize high-urgency emails from the user's inbox. 
+    The agent should prioritize emails based on the content of their summaries and bodies. 
+    Here are the specific instructions for determining urgency:
+    
+    **Criteria for Urgency**:
+        - **Keyword Detection**: Identify keywords that indicate urgency, such as "urgent," "immediate," "important," "ASAP," "deadline," "action required," or "please respond."
+        - **Sender Importance**: Prioritize emails from specific contacts or domains that are deemed important
+        - **Recency**: Consider the recency of the email; more recent emails should be prioritized higher.
+        - **Attachments and Links**: Identify emails that contain attachments or links relevant to urgent tasks or actions, especially if they pertain to project deadlines or critical information.
+        
+    """,
+    expected_output=""" 
     A JSON response containing a list of summarized emails with the following fields:
     - **subject**: The subject line of the email.
     - **summary**: A brief summary or excerpt of the email body.
+    - **urgency_score**: A score indicating the level of urgency.
     
     Example:
     {
-      "summarized_emails": [
+      "Urgent_emails": [
         {
           "📩 Subject": "Project Deadline Extension",
-          "📝 Summary": "The deadline for the XYZ project has been extended to next Friday."
+          "📝 Summary": "The deadline for the XYZ project has been extended to next Friday.",
+          "urgency_score": 9
         }
       ]
     }
     """,
+    tools=[fetch_emails_tool],
     agent=HR_agent
 )
+
 
 display_events_task = Task(
     description="Retrieve scheduled events for a given date {YYYY-MM-DD}.",
@@ -84,6 +98,7 @@ display_events_task = Task(
       ]
     }
     """,
+    tools=[fetch_events_tool ],
     agent=HR_agent
 )
 
@@ -91,14 +106,12 @@ display_events_task = Task(
 # ✅ Create Crew 
 crew = Crew(
     agents=[HR_agent],
-    tasks=[summarize_emails_task, display_events_task],
+    tasks=[display_events_task, summarize_emails_task],
     verbose=True
 )
 
 
-# Ask the user to enter a date dynamically
 user_date = input("Enter a date (YYYY-MM-DD): ").strip()
 
-inputs = {"YYYY-MM-DD": user_date}  # Use user input dynamically
-result = crew.kickoff(inputs)  # Pass the user-provided date
-
+inputs = {"YYYY-MM-DD": user_date}  
+result = crew.kickoff(inputs)  
