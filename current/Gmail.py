@@ -11,9 +11,12 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 
+from bs4 import BeautifulSoup
+
 def get_email_body(message: dict) -> str:
     """
     Extracts and decodes the email body from the Gmail message payload.
+    Prefers plain text, but if only HTML is available, it removes HTML tags.
 
     Args:
         message (dict): The Gmail API message object.
@@ -24,28 +27,39 @@ def get_email_body(message: dict) -> str:
     payload = message.get("payload", {})
     body = ""
 
-    # Check for multiple parts (text/plain, text/html)
     if "parts" in payload:
+        plain_text = None
+        html_text = None
+
         for part in payload["parts"]:
             mime_type = part.get("mimeType", "")
-            if mime_type in ["text/plain", "text/html"]:  # Prefer plain text
-                data = part.get("body", {}).get("data")
-                if data:
-                    try:
-                        body = base64.urlsafe_b64decode(data).decode("utf-8")
-                        break  # Stop at first valid part
-                    except Exception:
-                        continue  # Skip if decoding fails
+            data = part.get("body", {}).get("data")
 
-    # If no parts, check body directly
-    if not body and "body" in payload and "data" in payload["body"]:
+            if data:
+                try:
+                    decoded_data = base64.urlsafe_b64decode(data).decode("utf-8")
+
+                    if mime_type == "text/plain":
+                        plain_text = decoded_data
+                    elif mime_type == "text/html":
+                        html_text = decoded_data
+
+                except Exception:
+                    continue  # Skip if decoding fails
+
+        # Prefer plain text; fallback to HTML (with tags removed)
+        body = plain_text if plain_text else (
+            BeautifulSoup(html_text, "html.parser").get_text() if html_text else "No content available"
+        )
+
+    elif "body" in payload and "data" in payload["body"]:
         try:
             body = base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8")
+            body = BeautifulSoup(body, "html.parser").get_text()  # Remove HTML if needed
         except Exception:
             body = "Could not decode email body."
 
     return body.strip() if body else "No content available"
-
 
 
 def fetch_recent_emails(max_results: int = 3) -> list:

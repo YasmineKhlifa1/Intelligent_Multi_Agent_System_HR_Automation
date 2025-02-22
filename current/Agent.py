@@ -26,7 +26,7 @@ with open(file_path, 'r') as file:
 vertex_credentials_json = json.dumps(vertex_credentials)
 
 llm = LLM(
-    model="gemini/gemini-1.5-pro-latest",
+    model="gemini/gemini-2.0-flash",
     temperature=0.7,
     vertex_credentials=vertex_credentials_json
 )
@@ -50,17 +50,18 @@ HR_agent = Agent(
 
 
 summarize_emails_task = Task(
-    description="Fetch and summarize high-urgency emails.",
+    description="Fetch and summarize emails.",
     expected_output="""
-    A JSON response containing a list of urgent emails with sender name, subject, summary, and received time.
+    A JSON response containing a list of summarized emails with the following fields:
+    - **subject**: The subject line of the email.
+    - **summary**: A brief summary or excerpt of the email body.
+    
     Example:
     {
-      "urgent_emails": [
+      "summarized_emails": [
         {
-          
-          "subject": "Project Deadline Extension",
-          "summary": "The deadline for the XYZ project has been extended to next Friday.",
-          
+          "📩 Subject": "Project Deadline Extension",
+          "📝 Summary": "The deadline for the XYZ project has been extended to next Friday."
         }
       ]
     }
@@ -69,7 +70,7 @@ summarize_emails_task = Task(
 )
 
 display_events_task = Task(
-    description="Retrieve scheduled events for a given date.",
+    description="Retrieve scheduled events for a given date {YYYY-MM-DD}.",
     expected_output="""
     Provide the response in JSON format:
     {
@@ -91,14 +92,13 @@ display_events_task = Task(
 crew = Crew(
     agents=[HR_agent],
     tasks=[summarize_emails_task, display_events_task],
-    verbose=True,
-    memory=True
+    verbose=True
 )
 
 
-# ✅ Execute Crew with User Input
-try:
-    result = crew.kickoff(inputs={ "max_results" : 3 ,"date_str": '2025-02-24'})
-    print("✅ Execution Result:\n", result)
-except Exception as e:
-    print(f"❌ ERROR during Crew Execution: {e}")
+# Ask the user to enter a date dynamically
+user_date = input("Enter a date (YYYY-MM-DD): ").strip()
+
+inputs = {"YYYY-MM-DD": user_date}  # Use user input dynamically
+result = crew.kickoff(inputs)  # Pass the user-provided date
+
