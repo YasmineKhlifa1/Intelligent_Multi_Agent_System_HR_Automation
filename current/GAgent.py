@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 from langchain_google_genai import ChatGoogleGenerativeAI
-from Agent_Tools import FetchEventsForDateTool, FetchRecentEmailsTool
+from GAgent_Tools import FetchEventsForDateTool, FetchRecentEmailsTool
 from google.oauth2 import service_account
 
 
