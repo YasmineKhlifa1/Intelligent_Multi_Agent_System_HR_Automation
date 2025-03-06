@@ -49,8 +49,8 @@ class FetchRecentEmailsTool(BaseTool):
             subject = decode_header_value(subject)
             ai_reply = decode_email_body(clean_email_body(ai_reply))
 
-            #if sender_email:  # Ensure there is a valid sender email
-            #    send_reply(sender_email, subject, ai_reply)  # Send reply to the sender's email
+            if sender_email:  # Ensure there is a valid sender email
+                send_reply(sender_email, subject, ai_reply)  # Send reply to the sender's email
                 #print(f"Reply sent to {sender_email}!")
 
             formatted_emails.append({
