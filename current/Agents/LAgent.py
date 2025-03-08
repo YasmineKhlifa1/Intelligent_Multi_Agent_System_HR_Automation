@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, LLM
 
 from Tools.LAgent_Tools import AutomateLinkedinTool
+from pydantic import BaseModel, Field
 
 
 
