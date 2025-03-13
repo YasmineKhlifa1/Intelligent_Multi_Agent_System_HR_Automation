@@ -10,7 +10,7 @@ ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_KEY")
 
 
 class LinkedinAutomate:
-    def __init__(self,  title: str, description: str):
+    def __init__(self, title : str, description: str):
         self.access_token = ACCESS_TOKEN
         self.headers = {
             "Authorization": f"Bearer {self.access_token}",

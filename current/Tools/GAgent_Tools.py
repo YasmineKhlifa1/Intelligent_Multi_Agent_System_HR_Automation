@@ -26,7 +26,7 @@ class FetchRecentEmailsTool(BaseTool):
         formatted_emails = []
         for email in raw_emails:
 
-            sender_email = email.get("sender")
+            #sender_email = email.get("sender")
 
             subject = email.get("subject", "No Subject")
             summary = email.get("body", "No Summary")
@@ -44,19 +44,19 @@ class FetchRecentEmailsTool(BaseTool):
             summary = f"{summary[:200]} [...]" if len(summary) > 200 else summary
 
             # Generate AI reply
-            ai_reply = generate_reply(summary)
+            #ai_reply = generate_reply(summary)
 
             subject = decode_header_value(subject)
-            ai_reply = decode_email_body(clean_email_body(ai_reply))
+            #ai_reply = decode_email_body(clean_email_body(ai_reply))
 
-            if sender_email:  # Ensure there is a valid sender email
-                send_reply(sender_email, subject, ai_reply)  # Send reply to the sender's email
+            #if sender_email:  # Ensure there is a valid sender email
+                #send_reply(sender_email, subject, ai_reply)  # Send reply to the sender's email
                 #print(f"Reply sent to {sender_email}!")
 
             formatted_emails.append({
                 "📩 Subject": subject,
                 "📝 Summary": summary ,
-                "🤖 AI Reply": ai_reply,
+                #"🤖 AI Reply": ai_reply,
             })
             
             response = {
