@@ -1,4 +1,3 @@
-
 import os
 import re
 from dotenv import load_dotenv
@@ -52,7 +51,7 @@ from pydantic import BaseModel
 from typing import List
 
 class EmailScore(BaseModel):
-    summary: str
+    body: str
     score: float
 
 class EmailScoresResponse(BaseModel):
@@ -149,7 +148,8 @@ scoring_crew=Crew(
 )
 
 result =scoring_crew.kickoff()
-
+if result.json_dict:
+    print(f"JSON Output: {json.dumps(result.json_dict, indent=2)}")
 
 email_writing_crew=Crew(
     agents=[email_content_specialist,engagement_strategist], 
@@ -176,7 +176,7 @@ class Gmail_Pipeline(Flow):
 
             for email_score in email_scores_response.scores:  # Iterate through the list of EmailScore objects
              
-             if email_score.score > 2:  
+             if email_score.score >= 1:  
                 filtered_emails.append(email)  
         #print (filtered_emails)
         adresses=[]
@@ -190,6 +190,7 @@ class Gmail_Pipeline(Flow):
                 adresses.append(sender_email)
         print(adresses)
         return filtered_emails , adresses
+    
     
     @listen(filter_emails)
     def write_email(self, data):
@@ -216,7 +217,7 @@ class Gmail_Pipeline(Flow):
       return emails_reply
     
 flow=Gmail_Pipeline()
-emails = flow.kickoff()
+#emails = flow.kickoff()
     
 
     

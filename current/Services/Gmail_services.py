@@ -128,7 +128,7 @@ def fetch_recent_emails(max_results: int = 3) -> list:
             displayed_emails.append({
                 "sender": sender,
                 "subject": subject,
-                "body": body[:300],  # Limit body preview to 300 chars
+                "body": body,  
                 "received_time": received_time
             })
 

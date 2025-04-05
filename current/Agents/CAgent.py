@@ -6,8 +6,8 @@ import google.generativeai as genai
 import json
 from crewai import LLM
 
-
-from Calendar_Tools import GoogleCalendarTool
+from Tools.Calendar_Tools import GoogleCalendarTool
+from Tools.C_Tools import FetchEventsTool
 
 # Load environment variables
 load_dotenv()
@@ -39,19 +39,18 @@ calendar_agent = Agent(
               "Your job is to help users check their schedules, book meetings, and ensure seamless calendar organization.",
     verbose=True,
     memory=False, 
-    llm=llm
+    llm=llm,
+    allow_delegation=True
 )
 
 
 # Define task for retrieving calendar events
 retrieve_events_task = Task(
-    description="""Fetch events from Google Calendar for a specific time frame. 
-                   Use this when the user inquires about their schedule, such as 
-                   'Do I have any meetings tomorrow?' or 'What's on my calendar this week?'. 
-                   If no time period is mentioned, default to retrieving events for the current week.""",
+    description="""Fetch events from Google Calendar for a specific time frame {duration}""",
     expected_output="""A list of calendar events, including details like event title, start time, end time, and location (if available).""",
     agent=calendar_agent,
-    tools=[GoogleCalendarTool()],
+    tools=[FetchEventsTool()],
+    output_parser=lambda x: x["output"]  # Ensures only clean output is returned
 )
 
 
@@ -70,17 +69,13 @@ schedule_event_task = Task(
 
 calendar_crew = Crew(
     agents=[calendar_agent],
-    tasks=[retrieve_events_task,schedule_event_task],
+    tasks=[retrieve_events_task],
     verbose= True
 )
 
-# Ask the user for a calendar-related request
-user_query = input("How can I assist you with your calendar? ")
-
-print(f"Received user query: {user_query}")
-
-# Prepare inputs for the agent's kickoff
-inputs = {"query": user_query}
+duration = input("How many days ahead would you like to retrieve events for?")
+print(f"Received user query: {duration}")
+inputs = {"duration": duration}
 
 # Execute the agent
 response = calendar_crew.kickoff(inputs)

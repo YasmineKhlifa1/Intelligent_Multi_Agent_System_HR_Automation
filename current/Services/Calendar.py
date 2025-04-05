@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import json
 import os.path
 from zoneinfo import ZoneInfo
@@ -45,16 +45,15 @@ def get_calendar_service():
 def get_events(duration=None):
     service = get_calendar_service()
     
-    now = datetime.now()
-    
+    now = datetime.now() 
     if not duration:
-        start_of_week = now - datetime.timedelta(days=now.weekday())
-        end_of_week = start_of_week + datetime.timedelta(days=6)
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
         time_min = start_of_week.isoformat() + 'Z'
         time_max = end_of_week.isoformat() + 'Z'
     else:
         time_min = now.isoformat() + 'Z'
-        time_max = (now + datetime.timedelta(days=int(duration))).isoformat() + 'Z'
+        time_max = (now + timedelta(days=int(duration))).isoformat() + 'Z'
 
     events_result = service.events().list(
         calendarId='primary', timeMin=time_min, timeMax=time_max,
@@ -70,7 +69,7 @@ def get_events(duration=None):
         }
         events_list.append(event_data)
 
-    return json.dumps(events_list)
+    return events_list
 
 def check_calendar_availability(
   start_time: str,  # ISO format datetime string 
@@ -111,7 +110,6 @@ def check_calendar_availability(
       return f"User is available from {start_time} to {end_time} ({timezone})."
     return f"User has the following commitments between {start_time} and {end_time} ({timezone}):\n" + "\n".join(busy_times)
 
-#print(check_calendar_availability('2025-04-04T13:30:00','2025-04-04T14:30:00', 'Africa/Tunis'))
 
 def create_calendar_invite(
   summary: str,
@@ -155,4 +153,40 @@ def create_calendar_invite(
   except Exception as e:
     return f"An error occurred while creating the calendar invite: {str(e)}"
     
-#print(create_calendar_invite('AprilEvent, delete', '2025-04-04T13:30:00', '2025-04-04T14:30:00', ['yessmine.khlifa@enicar.ucar.tn'], 'Africa/Tunis'))
+from datetime import datetime, timedelta
+import json
+
+from datetime import datetime, timedelta
+from typing import List, Dict
+
+def filter_events(events: List[Dict], start_date: str = None, duration: int = 7) -> List[Dict]:
+    """
+    Filters events based on a given start date and duration (days).
+    Removes duplicate events based on summary and start time.
+    """
+    if not start_date:
+        start_date = datetime.now().date()  # Default: today
+    else:
+        # Ensure the start_date is a datetime object if passed as a string
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+    # Calculate end date using timedelta
+    end_date = start_date + timedelta(days=duration)
+
+    filtered_events = []
+    seen_events = set()  # To remove duplicates
+
+    for event in events:
+        event_start = datetime.fromisoformat(event["start"]).date()  # Ensure the event start is a date
+        event_summary = event["summary"]
+
+        # Filter events within the desired range
+        if start_date <= event_start < end_date:
+            # Avoid duplicates (by checking both start date and summary)
+            event_key = (event_start, event_summary)
+            if event_key not in seen_events:
+                seen_events.add(event_key)
+                filtered_events.append(event)
+
+    return filtered_events

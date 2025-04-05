@@ -96,20 +96,8 @@ def read_email() -> str:
             # Clean up the body
             body = clean_email_body(body)
 
-            # Only include subject and Email ID for the most recent (last) email
-            if i == len(thread['messages']) - 1:
-              email_id = msg['id']
-              email_summary += f"Subject: {subject}\n"
-              email_summary += f"Email ID: {email_id}\n"
-
-            email_summary += f"Date: {date}\n" \
-                             f"From: {sender}\n" \
-                             f"To: {to}\n" \
-                             f"CC: {cc}\n" \
-                             f"Body:\n{body}\n\n" \
-                             f"{'='*25}\n\n"
         
-        return email_summary
+        return body 
 
 def clean_email_body(body: str) -> str:
     """
@@ -191,33 +179,5 @@ def send_reply(recipient_email, subject, reply_body):
         print(f"An error occurred: {str(e)}")
         
         
-def notify_owner(
-  subject: str,  # The subject of the notification email
-  body: str      # The body content of the notification email
-) -> bool:  # Returns True if email was sent successfully, False otherwise
-  """
-  Sends an email to the owner with the provided subject and body.
-  """
 
-  payload = {
-    "text": body,
-    "subject": subject
-  }
-
-  json_payload = json.dumps(payload)
-  headers = {
-    "Content-Type": "application/json"
-  }
-  try:
-    response = requests.post(SECRETS['EMAIL_API_URL'], data=json_payload, headers=headers)
-
-    if response.status_code == 200:
-      print("Email sent successfully!")
-      print("Response:", response.json())
-    else:
-      print(f"Failed to send email. Status code: {response.status_code}")
-      print("Response:", response.text)
-
-  except requests.exceptions.RequestException as e:
-    print(f"An error occurred: {e}")
 
