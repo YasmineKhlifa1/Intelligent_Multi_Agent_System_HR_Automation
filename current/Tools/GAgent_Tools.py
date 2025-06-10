@@ -7,19 +7,18 @@ import re
 from datetime import datetime
 
 from Prompts.AI_Reply_Generation import generate_reply
-from Services.Gmail_services import clean_email_body, decode_email_body, decode_header_value, fetch_recent_emails, send_reply
+from current.Services.Gmail_S import clean_email_body, decode_email_body, decode_header_value, fetch_recent_emails, send_reply
 
 # ✅ Define input schema using Pydantic
 class FetchEmailsInput(BaseModel):
-    max_results: int = 3
-
+    max_results: int 
 
 class FetchRecentEmailsTool(BaseTool):
     name: str = "Fetch Recent Emails"
     description: str = "Fetches the latest emails from the user's Gmail inbox."
     args_schema: type = FetchEmailsInput
 
-    def _run(self, max_results: int = 3):
+    def _run(self, max_results: int ):
         raw_emails = fetch_recent_emails(max_results)  # Fetch raw emails
 
         formatted_emails = []
@@ -47,5 +46,3 @@ class FetchRecentEmailsTool(BaseTool):
         }
 
         return json.dumps(response, indent=2, ensure_ascii=False)
-
-

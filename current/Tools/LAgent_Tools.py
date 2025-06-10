@@ -2,7 +2,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from Services.LinkedIn import LinkedinAutomate
+from current.Services.LinkedIn_S import LinkedinAutomate
 from Prompts.generate_LinkedIn_post import generate_linkedin_post  
 
 # ✅ Load environment variables
