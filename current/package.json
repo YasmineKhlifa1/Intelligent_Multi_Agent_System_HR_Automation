@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "antd": "^5.25.4",
-    "react-router-dom": "^7.6.1",
-    "react-websocket": "^2.1.0"
-  }
-}
